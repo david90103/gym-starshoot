@@ -49,6 +49,7 @@ def rollout(env):
             skip -= 1
 
         obser, r, done, info = env.step(a)
+        human_agent_action = 0
         env.render()
         if done: break
         if human_wants_restart: break

@@ -130,6 +130,20 @@ class Grid():
         for i in range(-h, h):
             for j in range(-h, h):
                 self.draw([cord[0]+i, cord[1]+j], self.SPACE_COLOR)
+    
+    def draw_bullet(self, bullet):
+        cord = bullet.position
+        h = bullet.HIT_BOX_SIZE // 2
+        for i in range(-h, h):
+            for j in range(-h, h):
+                self.draw([cord[0]+i, cord[1]+j], bullet.color)
+    
+    def erase_bullet(self, bullet):
+        cord = bullet.position
+        h = bullet.HIT_BOX_SIZE // 2
+        for i in range(-h, h):
+            for j in range(-h, h):
+                self.draw([cord[0]+i, cord[1]+j], self.SPACE_COLOR)
 
     def erase(self, coord):
         """
