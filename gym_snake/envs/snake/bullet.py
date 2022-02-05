@@ -5,6 +5,7 @@ class Bullet():
 
     HIT_BOX_SIZE = 2
     BULLET_SPEED = 2
+    PATH_RENDER_LIMIT = 50
     UP = 1
     DOWN = -1
 
@@ -20,7 +21,7 @@ class Bullet():
     def normal_path(self):
         path = []
         first_pos = self.position
-        for i in range(80):
+        for i in range(self.PATH_RENDER_LIMIT):
             path.append([first_pos[0], first_pos[1] + i * self.BULLET_SPEED * self.direction])
         
         return path

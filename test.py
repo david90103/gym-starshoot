@@ -2,7 +2,8 @@
 from __future__ import print_function
 
 import sys, gym
-import gym_snake
+import tkinter
+import gym_snake # snake-v0
 
 env = gym.make('snake-v0')
 
@@ -33,7 +34,8 @@ def key_press(event):
 #         human_agent_action = 0
 
 env.render()
-env.fig.canvas.mpl_connect('key_press_event', key_press)
+if env.fig.canvas:
+    env.fig.canvas.mpl_connect('key_press_event', key_press)
 
 def rollout(env):
     global human_agent_action, human_wants_restart, human_sets_pause
@@ -52,15 +54,18 @@ def rollout(env):
         human_agent_action = 0
         env.render()
         if done: break
-        if human_wants_restart: break
-        while human_sets_pause:
-            env.render()
-            import time
-            time.sleep(0.1)
+        # if human_wants_restart: break
+        # while human_sets_pause:
+        #     env.render()
+        #     import time
+        #     time.sleep(0.1)
 
 print("ACTIONS={}".format(ACTIONS))
 print("Press keys 1 2 3 ... to take actions 1 2 3 ...")
 print("No keys pressed is taking action 0")
 
-while 1:
-    rollout(env)
+try:
+    while 1:
+        rollout(env)
+except tkinter.TclError:
+    print("Terminated by user.")

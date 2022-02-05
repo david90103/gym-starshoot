@@ -5,15 +5,23 @@ import numpy as np
 
 class Controller():
 
+    WALL_GAP_INIT = 5
+    WALL_GAP_MAX = 32
+    MP_SPEED = 0.05
+    WALL_SHRINK_SPEED = 0.1
+    WALL_COUNT_INIT = 10
+    PLAYER1_COLOR = np.array([255,0,0], dtype=np.uint8)
+    PLAYER2_COLOR = np.array([0,0,255], dtype=np.uint8)
+
     def __init__(self, grid_size, unit_size, unit_gap):
 
         self.grid = Grid(grid_size, unit_size, unit_gap)
-        PLAYER1_COLOR = np.array([255,0,0], dtype=np.uint8)
-        PLAYER2_COLOR = np.array([0,0,255], dtype=np.uint8)
-        self.players = [Snake([self.grid.grid_size[0] // 2, self.grid.grid_size[1] * 7 // 8], PLAYER2_COLOR),
-                        Snake([self.grid.grid_size[0] // 2, self.grid.grid_size[1] // 8], PLAYER1_COLOR),]
+        self.wall_gap = self.WALL_GAP_INIT
+        self.players = [Snake(0, [self.grid.grid_size[0] // 2, self.grid.grid_size[1] - self.wall_gap], self.PLAYER2_COLOR),
+                        Snake(1, [self.grid.grid_size[0] // 2, self.wall_gap], self.PLAYER1_COLOR),]
         self.bullets = []
         self.done = False
+        self.wall_counter = self.WALL_COUNT_INIT
         
         for p in self.players:
             self.grid.draw_player(p)
@@ -21,9 +29,6 @@ class Controller():
     def move_player(self, player_idx):
 
         player = self.players[player_idx]
-        if player.direction == player.STOP:
-            return
-
         self.grid.erase_player(player)
 
         if player.direction == player.RIGHT:
@@ -35,6 +40,12 @@ class Controller():
     
     def bounded_x(self, position):
         return max(0, min(position, self.grid.grid_size[0]))
+    
+    def add_mp(self, player_idx):
+        player = self.players[player_idx]
+        self.grid.erase_player_mp(player)
+        player.mp = min(10, player.mp + self.MP_SPEED)
+        self.grid.draw_player_mp(player)
     
     def move_bullets(self):
         should_remove = []
@@ -49,66 +60,77 @@ class Controller():
         for i in sorted(should_remove, reverse=True):
             self.bullets.pop(i)
         
+    def check_hit(self):
+        for i in range(self.grid.grid_size[0]):
+            if np.array_equal(self.grid.color_of([i, self.players[1].position[1]]), self.players[1].color) and \
+               np.array_equal(self.grid.color_of([i, self.players[1].position[1]+1]), self.players[0].color):
+                return True, 0
+            if np.array_equal(self.grid.color_of([i, self.players[0].position[1]]), self.players[0].color) and \
+               np.array_equal(self.grid.color_of([i, self.players[0].position[1]-2]), self.players[1].color):
+                return True, 1
+            # TODO: Bullet does not travel every pixel!!!
+            
+        return False, None
+    
+    def check_move_wall(self):
+        if self.wall_counter <= 0:
+            self.move_wall()
+            self.wall_counter = self.WALL_COUNT_INIT
+        else:
+            self.wall_counter -= self.WALL_SHRINK_SPEED
 
-    # def move_result(self, direction, snake_idx=0):
-    #     """
-    #     Checks for food and death collisions after moving snake. Draws head of snake if
-    #     no death scenarios.
-    #     """
-
-    #     snake = self.snakes[snake_idx]
-    #     if type(snake) == type(None):
-    #         return 0
-
-    #     # Check for death of snake
-    #     if self.grid.check_death(snake.head):
-    #         self.dead_snakes[snake_idx] = self.snakes[snake_idx]
-    #         self.snakes[snake_idx] = None
-    #         self.grid.cover(snake.head, snake.head_color) # Avoid miscount of grid.open_space
-    #         self.grid.connect(snake.body.popleft(), snake.body[0], self.grid.SPACE_COLOR)
-    #         reward = -1
-    #     # Check for reward
-    #     elif self.grid.food_space(snake.head):
-    #         self.grid.draw(snake.body[0], self.grid.BODY_COLOR) # Redraw tail
-    #         self.grid.connect(snake.body[0], snake.body[1], self.grid.BODY_COLOR)
-    #         self.grid.cover(snake.head, snake.head_color) # Avoid miscount of grid.open_space
-    #         reward = 1
-    #         self.grid.new_food()
-    #     else:
-    #         reward = 0
-    #         empty_coord = snake.body.popleft()
-    #         self.grid.connect(empty_coord, snake.body[0], self.grid.SPACE_COLOR)
-    #         self.grid.draw(snake.head, snake.head_color)
-
-    #     self.grid.connect(snake.body[-1], snake.head, self.grid.BODY_COLOR)
-
-    #     return reward
+    def move_wall(self):
+        self.wall_gap = min(self.wall_gap + 1, self.WALL_GAP_MAX)
+        p1_pos = self.grid.grid_size[1] - self.wall_gap
+        p2_pos = self.wall_gap
+        p1 = self.players[0]
+        p2 = self.players[1]
+        self.grid.erase_player(p1)
+        p1.position = np.asarray([p1.position[0], p1_pos]).astype(np.int)
+        self.grid.draw_player(p1)
+        self.grid.erase_player(p2)
+        p2.position = np.asarray([p2.position[0], p2_pos]).astype(np.int)
+        self.grid.draw_player(p2)
 
     def step(self, action):
        
-        rewards = []
+        rewards = 0
 
         if type(action) == type(int()):
             action = [action]
 
         for i, act in enumerate(action):
             if act == 1:
-                self.players[i].direction = self.players[i].LEFT
+                self.players[0].direction = self.players[0].LEFT
             elif act == 2:
-                self.players[i].direction = self.players[i].RIGHT
+                self.players[0].direction = self.players[0].RIGHT
             elif act == 3:
                 direction = -1
-                if i == 1:
-                    direction = 1
-                self.bullets.append(Bullet(self.players[i].position, self.players[i].color, direction))
-                pass # fire bullet
+                if self.players[0].mp >= 1:
+                    self.players[0].mp -= 1
+                    self.bullets.append(Bullet(self.players[0].position, self.players[0].color, direction))
+            elif act == 4:
+                self.players[1].direction = self.players[1].LEFT
+            elif act == 5:
+                self.players[1].direction = self.players[1].RIGHT
+            elif act == 6:
+                direction = 1 
+                if self.players[1].mp >= 1:
+                    self.players[1].mp -= 1
+                    self.bullets.append(Bullet(self.players[1].position, self.players[1].color, direction))
 
+        for i in range(len(self.players)):
+            self.add_mp(i)
             self.move_player(i)
+
             # rewards.append(self.move_result(direction, i))
 
         self.move_bullets()
+        self.check_move_wall()
+        finish, winner = self.check_hit()
+        if finish:
+            self.done = True
+            print("Player", winner, "is the winner.")
+            rewards = 1 if winner == 0 else -1
 
-        if len(rewards) is 1:
-            return self.grid.grid.copy(), rewards[0], self.done, {"snakes_remaining":1}
-        else:
-            return self.grid.grid.copy(), rewards, self.done, {"snakes_remaining":1}
+        return self.grid.grid.copy(), rewards, self.done, {"snakes_remaining":1}
