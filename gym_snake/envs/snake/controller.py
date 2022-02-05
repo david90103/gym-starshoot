@@ -10,15 +10,15 @@ class Controller():
     MP_SPEED = 0.05
     WALL_SHRINK_SPEED = 0.1
     WALL_COUNT_INIT = 10
+    PLAYER0_COLOR = np.array([0,0,255], dtype=np.uint8)
     PLAYER1_COLOR = np.array([255,0,0], dtype=np.uint8)
-    PLAYER2_COLOR = np.array([0,0,255], dtype=np.uint8)
 
     def __init__(self, grid_size, unit_size, unit_gap):
 
         self.grid = Grid(grid_size, unit_size, unit_gap)
         self.wall_gap = self.WALL_GAP_INIT
-        self.players = [Snake(0, [self.grid.grid_size[0] // 2, self.grid.grid_size[1] - self.wall_gap], self.PLAYER2_COLOR),
-                        Snake(1, [self.grid.grid_size[0] // 2, self.wall_gap], self.PLAYER1_COLOR),]
+        self.players = [Snake(0, [self.grid.grid_size[0] // 2 - 10, self.grid.grid_size[1] - self.wall_gap], self.PLAYER0_COLOR),
+                        Snake(1, [self.grid.grid_size[0] // 2 + 10, self.wall_gap], self.PLAYER1_COLOR),]
         self.bullets = []
         self.done = False
         self.wall_counter = self.WALL_COUNT_INIT
@@ -96,7 +96,7 @@ class Controller():
        
         rewards = 0
 
-        if type(action) == type(int()):
+        if type(action) != type([]):
             action = [action]
 
         for i, act in enumerate(action):

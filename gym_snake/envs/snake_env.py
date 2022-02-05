@@ -33,7 +33,7 @@ class SnakeEnv(gym.Env):
         self.last_obs = self.controller.grid.grid.copy()
         return self.last_obs
 
-    def render(self, mode='human', close=False, frame_speed=.0001):
+    def render(self, mode='rgb_array', close=False, frame_speed=.0001):
         if mode == 'human':
             if self.viewer is None:
                 self.fig = plt.figure()
