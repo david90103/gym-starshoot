@@ -4,7 +4,7 @@ import numpy as np
 
 class Box():
 
-    BOX_COLOR = np.array([0,255,255], dtype=np.uint8)
+    BOX_COLOR = np.array([255,255,0], dtype=np.uint8)
     RIGHT = 1
     LEFT = -1
     HIT_BOX_SIZE = 4
@@ -22,7 +22,7 @@ class Box():
         path = []
         first_pos = self.position
         for i in range(self.PATH_RENDER_LIMIT):
-            path.append([first_pos[0] + i * self.box_speed * self.direction, first_pos[1]])
+            path.append([round(first_pos[0] + i * self.box_speed * self.direction), first_pos[1]])
         
         return path
 
@@ -47,7 +47,7 @@ class PBox():
         path = []
         first_pos = self.position
         for i in range(self.PATH_RENDER_LIMIT):
-            path.append([first_pos[0], first_pos[1] + i * self.BOX_SPEED * self.direction])
+            path.append([first_pos[0], round(first_pos[1] + i * self.BOX_SPEED * self.direction)])
         
         return path
     

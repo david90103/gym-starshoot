@@ -32,12 +32,14 @@ class SnakeEnv(gym.Env):
         self.last_obs = self.controller.grid.grid.copy()
         return self.last_obs
 
-    def render(self, mode='rgb_array', close=False, frame_speed=.0001):
+    def render(self, mode='rgb_array', close=False, frame_speed=.01):
         # mode='view_only'
         if mode == 'human':
             if self.viewer is None:
                 self.fig = plt.figure()
                 self.viewer = self.fig.add_subplot(111)
+                self.viewer.get_xaxis().set_visible(False)
+                self.viewer.get_yaxis().set_visible(False)
                 plt.ion()
                 self.fig.show()
             else:

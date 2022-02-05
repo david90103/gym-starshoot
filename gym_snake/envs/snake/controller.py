@@ -7,6 +7,7 @@ import numpy as np
 
 class Controller():
 
+    # Game
     WALL_GAP_INIT = 5
     WALL_GAP_MAX = 32
     MP_SPEED = 0.05
@@ -15,6 +16,11 @@ class Controller():
     GEN_BOX_PROB = 0.1
     PLAYER0_COLOR = np.array([0,0,255], dtype=np.uint8)
     PLAYER1_COLOR = np.array([255,0,0], dtype=np.uint8)
+
+    # Agent
+    TIME_PUNISHMENT = 0.0001
+    HIT_BOX_REWARD = 0.05
+    EAT_PBOX_REWARD = 0.1
 
     def __init__(self, grid_size, unit_size, unit_gap):
 
@@ -27,7 +33,8 @@ class Controller():
         self.p_boxes = []
         self.done = False
         self.wall_counter = self.WALL_COUNT_INIT
-        self.time_punish = 0
+        self.rewards_p1 = 0
+        self.rewards_p2 = 0
         
         for p in self.players:
             self.grid.draw_player(p)
@@ -45,7 +52,7 @@ class Controller():
         self.grid.draw_player(player)
     
     def bounded_x(self, position):
-        return max(0, min(position, self.grid.grid_size[0]))
+        return max(0, min(round(position), self.grid.grid_size[0]))
     
     def add_mp(self, player_idx):
         player = self.players[player_idx]
@@ -93,12 +100,13 @@ class Controller():
             self.p_boxes.pop(i)
         
     def check_kill(self):
+        hbs = self.players[0].HIT_BOX_SIZE
         for i in range(self.grid.grid_size[0]):
             if np.array_equal(self.grid.color_of([i, self.players[1].position[1]]), self.players[1].color) and \
-               np.array_equal(self.grid.color_of([i, self.players[1].position[1]+1]), self.players[0].color):
+               np.array_equal(self.grid.color_of([i, self.players[1].position[1]+hbs//2]), self.players[0].color):
                 return True, 0
             if np.array_equal(self.grid.color_of([i, self.players[0].position[1]]), self.players[0].color) and \
-               np.array_equal(self.grid.color_of([i, self.players[0].position[1]-2]), self.players[1].color):
+               np.array_equal(self.grid.color_of([i, self.players[0].position[1]-hbs//2]), self.players[1].color):
                 return True, 1
             # TODO: Bullet does not travel every pixel!!!
             
@@ -136,49 +144,60 @@ class Controller():
     def check_hit_box(self):
         should_remove = []
         for idx, box in enumerate(self.boxes):
-            for i in range(box.HIT_BOX_SIZE * 2):
+            for i in range(box.HIT_BOX_SIZE):
                 hbs = box.HIT_BOX_SIZE
-                x = max(0, min(box.position[0]-hbs+i, self.grid.grid_size[0] - 1))
-                y = max(0, min(box.position[1]-hbs, self.grid.grid_size[1] - 1))
+                x = max(0, min(box.position[0]-hbs//2+i, self.grid.grid_size[0] - 1))
+                y = max(0, min(box.position[1]+hbs//2+1, self.grid.grid_size[1] - 1))
                 # Player 1
                 if np.array_equal(self.grid.color_of([x, y]), self.players[0].color) and idx not in should_remove:
                     self.grid.erase_bullet(box)
                     self.p_boxes.append(PBox(box.position, 1))
                     should_remove.append(idx)
+                    self.rewards_p1 += self.HIT_BOX_REWARD
                 # Player 2
-                y = max(0, min(box.position[1]-hbs, self.grid.grid_size[1] - 1))
+                y = max(0, min(box.position[1]-hbs//2-1, self.grid.grid_size[1] - 1))
                 if np.array_equal(self.grid.color_of([x, y]), self.players[1].color) and idx not in should_remove:
                     self.grid.erase_bullet(box)
                     self.p_boxes.append(PBox(box.position, -1))
                     should_remove.append(idx)
+                    self.rewards_p2 += self.HIT_BOX_REWARD
         for i in sorted(should_remove, reverse=True):
             self.boxes.pop(i)
     
     def check_hit_pbox(self):
-        # should_remove = []
-        # for idx, box in enumerate(self.p_boxes):
-        #     for i in range(box.HIT_BOX_SIZE * 2):
-        #         hbs = box.HIT_BOX_SIZE
-        #         x = max(0, min(box.position[0]-hbs+i, self.grid.grid_size[0] - 1))
-        #         y = max(0, min(box.position[1]-hbs, self.grid.grid_size[1] - 1))
-        #         # Player 1
-        #         if np.array_equal(self.grid.color_of([x, y]), self.players[0].color) and idx not in should_remove:
-        #             self.grid.erase_bullet(box)
-        #             self.p_boxes.append(PBox(box.position, 1))
-        #             should_remove.append(idx)
-        #         # Player 2
-        #         y = max(0, min(box.position[1]-hbs, self.grid.grid_size[1] - 1))
-        #         if np.array_equal(self.grid.color_of([x, y]), self.players[1].color) and idx not in should_remove:
-        #             self.grid.erase_bullet(box)
-        #             self.p_boxes.append(PBox(box.position, -1))
-        #             should_remove.append(idx)
-        # for i in sorted(should_remove, reverse=True):
-        #     self.boxes.pop(i)
+        if len(self.p_boxes) == 0:
+            return
+        should_remove = []
+        p1 = self.players[0]
+        p2 = self.players[1]
+        for pbox_idx, pb in enumerate(self.p_boxes):
+            for i in range(p1.HIT_BOX_SIZE * 2):
+                hbs = p1.HIT_BOX_SIZE
+                x = max(0, min(p1.position[0]-hbs//2+i, self.grid.grid_size[0] - 1))
+                y = max(0, min(p1.position[1]-hbs//2, self.grid.grid_size[1] - 1))
+                # Player 1
+                if np.array_equal([x, y], pb.position) and pbox_idx not in should_remove:
+                    print("p1 eat")
+                    self.grid.erase_bullet(pb)
+                    should_remove.append(pbox_idx)
+                    self.rewards_p1 += self.EAT_PBOX_REWARD
+                    break
+                # Player 2
+                x = max(0, min(p2.position[0]-hbs//2+i, self.grid.grid_size[0] - 1))
+                y = max(0, min(p2.position[1]+hbs//2+1, self.grid.grid_size[1] - 1))
+                if np.array_equal([x, y], pb.position) and pbox_idx not in should_remove:
+                    print("p2 eat")
+                    self.grid.erase_bullet(pb)
+                    should_remove.append(pbox_idx)
+                    self.rewards_p2 += self.EAT_PBOX_REWARD
+                    break
+        for i in sorted(should_remove, reverse=True):
+            self.p_boxes.pop(i)
         pass
 
     def step(self, action):
-        self.time_punish += 0.0001
-        rewards = -self.time_punish
+        self.rewards_p1 -= self.TIME_PUNISHMENT
+        self.rewards_p2 -= self.TIME_PUNISHMENT
 
         if type(action) != type([]):
             action = [action]
@@ -219,11 +238,11 @@ class Controller():
         finish, winner = self.check_kill()
         if finish:
             self.done = True
-            rewards = rewards + 10 if winner == 0 else rewards - 10
-            print("Player", winner, "is the winner. Reward:", round(rewards, 4))
+            self.rewards_p1 = self.rewards_p1 + 10 if winner == 0 else self.rewards_p1 - 10
+            print("Player", winner, "is the winner. Reward:", round(self.rewards_p1, 4))
         
-        if self.time_punish > 0.1:
+        if self.rewards_p1 < -0.1:
             self.done = True
-            print("Times up. Reward:", round(rewards, 4))
+            print("Times up. Reward:", round(self.rewards_p1, 4))
 
-        return self.grid.grid.copy(), rewards, self.done, {"snakes_remaining":1}
+        return self.grid.grid.copy(), self.rewards_p1, self.done, {"snakes_remaining":1}
