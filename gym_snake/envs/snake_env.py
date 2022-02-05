@@ -1,4 +1,6 @@
 import os, subprocess, time, signal
+
+import numpy
 import gym
 from gym import error, spaces, utils
 from gym.utils import seeding
@@ -13,15 +15,12 @@ except ImportError as e:
 class SnakeEnv(gym.Env):
     metadata = {'render.modes': ['human', 'view_only', 'rgb_array']}
 
-    def __init__(self, grid_size=[20,30], unit_size=10, unit_gap=1, snake_size=3, n_snakes=1, n_foods=1, random_init=True):
+    def __init__(self, grid_size=[50,80], unit_size=10, unit_gap=1, random_init=True):
         self.grid_size = grid_size
         self.unit_size = unit_size
         self.unit_gap = unit_gap
-        self.snake_size = snake_size
-        self.n_snakes = n_snakes
-        self.n_foods = n_foods
         self.viewer = None
-        self.action_space = Discrete(4)
+        self.action_space = Discrete(8)
         self.random_init = random_init
 
     def step(self, action):
@@ -34,6 +33,7 @@ class SnakeEnv(gym.Env):
         return self.last_obs
 
     def render(self, mode='rgb_array', close=False, frame_speed=.0001):
+        # mode='view_only'
         if mode == 'human':
             if self.viewer is None:
                 self.fig = plt.figure()
