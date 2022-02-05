@@ -20,7 +20,7 @@ class SnakeEnv(gym.Env):
         self.unit_size = unit_size
         self.unit_gap = unit_gap
         self.viewer = None
-        self.action_space = Discrete(8)
+        self.action_space = Discrete(4)
         self.random_init = random_init
 
     def step(self, action):

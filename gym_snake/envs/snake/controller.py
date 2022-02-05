@@ -19,8 +19,8 @@ class Controller():
 
     # Agent
     TIME_PUNISHMENT = 0.0001
-    HIT_BOX_REWARD = 0.05
-    EAT_PBOX_REWARD = 0.1
+    HIT_BOX_REWARD = 0
+    EAT_PBOX_REWARD = 0.05
 
     def __init__(self, grid_size, unit_size, unit_gap):
 
