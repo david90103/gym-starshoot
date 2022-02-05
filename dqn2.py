@@ -22,19 +22,44 @@ BATCH_SIZE = 128  # Q-learning batch size
 
 ACTIONS = 4
 
-gpu = False
+gpu = True
 
 #%% DQN NETWORK ARCHITECTURE
 class Network(nn.Module):
-    def __init__(self):
+    def __init__(self, action_dim=4):
         nn.Module.__init__(self)
-        self.l1 = nn.Linear(180000, HIDDEN_LAYER)
-        self.l2 = nn.Linear(HIDDEN_LAYER, 2)
+        self.l1 = nn.Linear(300000, HIDDEN_LAYER)
+        self.l2 = nn.Linear(HIDDEN_LAYER, action_dim)
 
     def forward(self, x):
         x = F.relu(self.l1(x))
         x = self.l2(x)
         return x
+
+    # def __init__(self, action_dim = 4):
+    #     super(QNetworkCNN, self).__init__()
+
+    #     self.conv_1 = nn.Conv2d(3, 32, kernel_size=8, stride=4)
+    #     self.conv_2 = nn.Conv2d(32, 64, kernel_size=4, stride=3)
+    #     self.conv_3 = nn.Conv2d(64, 64, kernel_size=3, stride=1)
+    #     self.pool = nn.MaxPool2d(kernel_size=3)
+    #     self.fc_1 = nn.Linear(13376, 512)
+    #     self.fc_2 = nn.Linear(512, action_dim)
+
+    # def forward(self, inp):
+    #     print("f")
+    #     inp = inp.view((1, 3, 800, 500))
+    #     x1 = self.pool(F.relu(self.conv_1(inp)))
+    #     x1 = F.relu(self.conv_2(x1))
+    #     x1 = F.relu(self.conv_3(x1))
+    #     x1 = torch.flatten(x1, 1)
+    #     # print(x1.shape)
+    #     # input()
+    #     x1 = F.leaky_relu(self.fc_1(x1))
+    #     x1 = self.fc_2(x1)
+
+    #     return x1
+
 model = Network()
 if gpu:
     model.to('cuda:0')
@@ -104,10 +129,8 @@ def run_episode(e, environment):
         steps += 1
 
         if done:
-            print(time.time() - start)
-            input()
             #print("{2} Episode {0} finished after {1} steps".format(e, steps, '\033[92m' if steps >= 195 else '\033[99m'))
-            print("Episode {0} finished after {1} steps".format(e, steps))
+            print("Episode {0} finished after {1} steps, time used {2}".format(e, steps, time.time() - start))
             episode_durations.append(steps)
             break
             
@@ -141,7 +164,7 @@ def learn():
     
 #%% RUN AND SHOW THE RESULT
 
-EPISODES = 20  # number of episodes
+EPISODES = 2000000  # number of episodes
 #establish the environment
 env = gym.make('snake-v0')
 
