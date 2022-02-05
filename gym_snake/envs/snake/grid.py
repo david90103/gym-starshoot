@@ -25,8 +25,8 @@ class Grid():
         unit_size - integer denoting the atomic size of grid units in pixels
         """
 
-        self.unit_size = int(unit_size)
-        self.unit_gap = unit_gap
+        self.unit_size = 1
+        self.unit_gap = 0
         self.grid_size = np.asarray(grid_size, dtype=np.int) # size in terms of units
         height = self.grid_size[1]*self.unit_size
         width = self.grid_size[0]*self.unit_size
@@ -56,9 +56,9 @@ class Grid():
         if self.off_grid(coord):
             return False
         x = int(coord[0]*self.unit_size)
-        end_x = x+self.unit_size-self.unit_gap
+        end_x = x+self.unit_size
         y = int(coord[1]*self.unit_size)
-        end_y = y+self.unit_size-self.unit_gap
+        end_y = y+self.unit_size
         self.grid[y:end_y, x:end_x, :] = np.asarray(color, dtype=np.uint8)
         return True
 
