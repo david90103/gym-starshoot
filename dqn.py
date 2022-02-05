@@ -27,7 +27,7 @@ class QNetwork(nn.Module):
 
     def forward(self, inp):
 
-        x1 = F.leaky_relu(self.fc_1(inp))
+        x1 = F.leaky_relu(self.fc_1(inp.flatten()))
         x1 = F.leaky_relu(self.fc_2(x1))
         x1 = self.fc_3(x1)
 
@@ -44,15 +44,19 @@ class QNetworkCNN(nn.Module):
         self.conv_1 = nn.Conv2d(3, 32, kernel_size=8, stride=4)
         self.conv_2 = nn.Conv2d(32, 64, kernel_size=4, stride=3)
         self.conv_3 = nn.Conv2d(64, 64, kernel_size=3, stride=1)
-        self.fc_1 = nn.Linear(159744, 512)
+        self.pool = nn.MaxPool2d(kernel_size=3)
+        self.fc_1 = nn.Linear(13376, 512)
         self.fc_2 = nn.Linear(512, action_dim)
 
     def forward(self, inp):
+        print("f")
         inp = inp.view((1, 3, 800, 500))
-        x1 = F.relu(self.conv_1(inp))
+        x1 = self.pool(F.relu(self.conv_1(inp)))
         x1 = F.relu(self.conv_2(x1))
         x1 = F.relu(self.conv_3(x1))
         x1 = torch.flatten(x1, 1)
+        # print(x1.shape)
+        # input()
         x1 = F.leaky_relu(self.fc_1(x1))
         x1 = self.fc_2(x1)
 
@@ -113,6 +117,13 @@ def select_action(model, env, state, eps):
 def train(batch_size, current, target, optim, memory, gamma):
 
     states, actions, next_states, rewards, is_done = memory.sample(batch_size)
+    
+    current.to(device)
+    states = states.to(device)
+    actions = actions.to(device)
+    next_states = next_states.to(device)
+    rewards = rewards.to(device)
+    is_done = is_done.to(device)
 
     q_values = current(states)
 
@@ -155,9 +166,9 @@ def update_parameters(current_model, target_model):
     target_model.load_state_dict(current_model.state_dict())
 
 
-def main(gamma=0.99, lr=1e-3, min_episodes=20, eps=1, eps_decay=0.995, eps_min=0.01, update_step=10, batch_size=64, update_repeats=50,
-         num_episodes=3000, seed=42, max_memory_size=50000, lr_gamma=0.9, lr_step=100, measure_step=100,
-         measure_repeats=100, hidden_dim=64, env_name='snake-v0', cnn=True, horizon=np.inf, render=False, render_step=50):
+def main(gamma=0.99, lr=1e-3, min_episodes=20, eps=1, eps_decay=0.995, eps_min=0.01, update_step=10, batch_size=1, update_repeats=50,
+         num_episodes=3000, seed=42, max_memory_size=500, lr_gamma=0.9, lr_step=100, measure_step=100,
+         measure_repeats=1, hidden_dim=64, env_name='snake-v0', cnn=True, horizon=np.inf, render=False, render_step=50):
     """
     :param gamma: reward discount factor
     :param lr: learning rate for the Q-Network
@@ -241,7 +252,8 @@ def main(gamma=0.99, lr=1e-3, min_episodes=20, eps=1, eps_decay=0.995, eps_min=0
             memory.update(state, action, reward, done)
 
         if episode >= min_episodes and episode % update_step == 0:
-            for _ in range(update_repeats):
+            for i in range(update_repeats):
+                print("Start training")
                 train(batch_size, Q_1, Q_2, optimizer, memory, gamma)
 
             # transfer new parameter from Q_1 to Q_2

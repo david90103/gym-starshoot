@@ -22,6 +22,7 @@ class Controller():
         self.bullets = []
         self.done = False
         self.wall_counter = self.WALL_COUNT_INIT
+        self.time_punish = 0
         
         for p in self.players:
             self.grid.draw_player(p)
@@ -93,8 +94,8 @@ class Controller():
         self.grid.draw_player(p2)
 
     def step(self, action):
-       
-        rewards = 0
+        self.time_punish += 0.0001
+        rewards = -self.time_punish
 
         if type(action) != type([]):
             action = [action]
@@ -130,7 +131,11 @@ class Controller():
         finish, winner = self.check_hit()
         if finish:
             self.done = True
-            print("Player", winner, "is the winner.")
-            rewards = 1 if winner == 0 else -1
+            rewards = rewards + 10 if winner == 0 else rewards - 10
+            print("Player", winner, "is the winner. Reward:", round(rewards, 4))
+        
+        if self.time_punish > 0.1:
+            self.done = True
+            print("Times up. Reward:", round(rewards, 4))
 
         return self.grid.grid.copy(), rewards, self.done, {"snakes_remaining":1}
