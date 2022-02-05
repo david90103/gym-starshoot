@@ -19,7 +19,7 @@ class Controller():
 
     # Agent
     TIME_PUNISHMENT = 0.0001
-    HIT_BOX_REWARD = 0
+    HIT_BOX_REWARD = 0.01
     EAT_PBOX_REWARD = 0.05
 
     def __init__(self, grid_size, unit_size, unit_gap):
@@ -35,6 +35,7 @@ class Controller():
         self.wall_counter = self.WALL_COUNT_INIT
         self.rewards_p1 = 0
         self.rewards_p2 = 0
+        self.step_count = 0
         
         for p in self.players:
             self.grid.draw_player(p)
@@ -235,14 +236,19 @@ class Controller():
         self.check_gen_box()
         self.check_hit_box()
         self.check_hit_pbox()
-        finish, winner = self.check_kill()
-        if finish:
-            self.done = True
-            self.rewards_p1 = self.rewards_p1 + 10 if winner == 0 else self.rewards_p1 - 10
-            print("Player", winner, "is the winner. Reward:", round(self.rewards_p1, 4))
+        # finish, winner = self.check_kill()
+        # if finish:
+        #     self.done = True
+        #     self.rewards_p1 = self.rewards_p1 + 10 if winner == 0 else self.rewards_p1 - 10
+        #     print("Player", winner, "is the winner. Reward:", round(self.rewards_p1, 4))
         
-        if self.rewards_p1 < -0.1:
+        # if self.rewards_p1 < -0.1:
+        #     self.done = True
+        #     print("Times up. Reward:", round(self.rewards_p1, 4))
+
+        if self.step_count > 10000:
             self.done = True
-            print("Times up. Reward:", round(self.rewards_p1, 4))
+        
+        self.step_count += 1
 
         return self.grid.grid.copy(), self.rewards_p1, self.done, {"snakes_remaining":1}
