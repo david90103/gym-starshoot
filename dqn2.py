@@ -100,20 +100,20 @@ class ReplayMemory:
         return len(self.memory)
 
 #%%
-memory = ReplayMemory(128)
+memory = ReplayMemory(10000)
 episode_durations = []
 
 def run_episode(e, environment):
-    state = environment.reset()
+    state = environment.reset().flatten()
     steps = 0
     start = time.time()
     while True:
         # environment.render()
-        action = select_action(torch.FloatTensor([state.flatten()]))
+        action = select_action(torch.FloatTensor([state]))
         if gpu:
             action = action.cpu()
         next_state, reward, done, _ = environment.step(action.numpy()[0, 0])
-
+        next_state = next_state.flatten()
         # negative reward when attempt ends
         if done:
             reward = -10
@@ -149,13 +149,13 @@ def learn():
     batch_next_state = Variable(torch.cat(batch_next_state))
 
     # current Q values are estimated by NN for all actions
-    current_q_values = model(batch_state).gather(1, batch_action)
     if gpu:
-        current_q_values = current_q_values.cpu()
+        batch_state = batch_state.to('cuda:0')
+    current_q_values = model(batch_state).cpu().gather(1, batch_action)
     # expected Q values are estimated from actions which gives maximum Q value
-    max_next_q_values = model(batch_next_state).detach().max(1)[0]
     if gpu:
-        max_next_q_values = max_next_q_values.cpu()
+        batch_next_state = batch_next_state.to('cuda:0')
+    max_next_q_values = model(batch_next_state).cpu().detach().max(1)[0]
     expected_q_values = batch_reward + (GAMMA * max_next_q_values)
 
     # loss is measured from error between current and newly expected Q values
