@@ -18,7 +18,7 @@ EPS_DECAY = 200  # e-greedy threshold decay
 GAMMA = 0.8  # Q-learning discount factor
 LR = 0.001  # NN optimizer learning rate
 HIDDEN_LAYER = 256  # NN hidden layer size
-BATCH_SIZE = 128  # Q-learning batch size
+BATCH_SIZE = 64  # Q-learning batch size
 
 ACTIONS = 4
 
@@ -28,7 +28,7 @@ gpu = True
 class Network(nn.Module):
     def __init__(self, action_dim=4):
         nn.Module.__init__(self)
-        self.l1 = nn.Linear(300000, HIDDEN_LAYER)
+        self.l1 = nn.Linear(12000, HIDDEN_LAYER)
         self.l2 = nn.Linear(HIDDEN_LAYER, action_dim)
 
     def forward(self, x):
@@ -100,7 +100,7 @@ class ReplayMemory:
         return len(self.memory)
 
 #%%
-memory = ReplayMemory(10)
+memory = ReplayMemory(128)
 episode_durations = []
 
 def run_episode(e, environment):
@@ -150,8 +150,12 @@ def learn():
 
     # current Q values are estimated by NN for all actions
     current_q_values = model(batch_state).gather(1, batch_action)
+    if gpu:
+        current_q_values = current_q_values.cpu()
     # expected Q values are estimated from actions which gives maximum Q value
     max_next_q_values = model(batch_next_state).detach().max(1)[0]
+    if gpu:
+        max_next_q_values = max_next_q_values.cpu()
     expected_q_values = batch_reward + (GAMMA * max_next_q_values)
 
     # loss is measured from error between current and newly expected Q values

@@ -246,8 +246,9 @@ class Controller():
         #     self.done = True
         #     print("Times up. Reward:", round(self.rewards_p1, 4))
 
-        if self.step_count > 10000:
+        if self.step_count > 1000:
             self.done = True
+            print("Times up. Reward:", round(self.rewards_p1, 4))
         
         self.step_count += 1
 
