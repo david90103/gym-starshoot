@@ -13,12 +13,6 @@ import matplotlib.pyplot as plt
 import gym_snake
 from wrappers import *
 
-# hyper parameters
-EPS_START = 0.9  # e-greedy threshold start value
-EPS_END = 0.05  # e-greedy threshold end value
-EPS_DECAY = 100000  # e-greedy threshold decay
-GAMMA = 0.8  # Q-learning discount factor
-LR = 0.001  # NN optimizer learning rate
 BATCH_SIZE = 64  # Q-learning batch size
 
 ACTIONS = 4
@@ -45,26 +39,18 @@ class Network(nn.Module):
 
 
 model = Network()
+model.load_state_dict(torch.load("checkpoint.pth"))
 if gpu:
     model.to('cuda:0')
-optimizer = optim.Adam(model.parameters(), LR)
 
 #%% SELECT ACTION USING GREEDY ALGORITHM
 steps_done = 0
 def select_action(state):
     global steps_done
-    sample = random.random()
-    eps_threshold = EPS_END + (EPS_START - EPS_END) * math.exp(-1. * steps_done / EPS_DECAY)
-    steps_done += 1
-    if sample > eps_threshold:
-        #return argmaxQ
-        data = Variable(state).type(torch.FloatTensor)
-        if gpu:
-            data = data.to('cuda:0')
-        return model(data).data.max(1)[1].view(1, 1)
-    else:
-        #return random action
-        return torch.LongTensor([[random.randrange(ACTIONS)]])
+    data = Variable(state).type(torch.FloatTensor)
+    if gpu:
+        data = data.to('cuda:0')
+    return model(data).data.max(1)[1].view(1, 1)
     
 #%% MEMORY REPLAY
 class ReplayMemory:
@@ -106,8 +92,6 @@ def run_episode(e, environment):
                      torch.FloatTensor([next_state]),
                      torch.FloatTensor([reward])))
 
-        learn()
-
         state = next_state
         steps += 1
 
@@ -117,39 +101,6 @@ def run_episode(e, environment):
             episode_durations.append(steps)
             break
             
-#%% TRAIN THE MODEL
-def learn():
-    if len(memory) < BATCH_SIZE:
-        return
-
-    # random transition batch is taken from experience replay memory
-    transitions = memory.sample(BATCH_SIZE)
-    batch_state, batch_action, batch_next_state, batch_reward = zip(*transitions)
-
-    batch_state = Variable(torch.cat(batch_state))
-    batch_action = Variable(torch.cat(batch_action))
-    batch_reward = Variable(torch.cat(batch_reward))
-    batch_next_state = Variable(torch.cat(batch_next_state))
-
-    # current Q values are estimated by NN for all actions
-    if gpu:
-        batch_state = batch_state.to('cuda:0')
-    current_q_values = model(batch_state).cpu().gather(1, batch_action)
-    # expected Q values are estimated from actions which gives maximum Q value
-    if gpu:
-        batch_next_state = batch_next_state.to('cuda:0')
-    max_next_q_values = model(batch_next_state).cpu().detach().max(1)[0]
-    expected_q_values = batch_reward + (GAMMA * max_next_q_values)
-
-    # loss is measured from error between current and newly expected Q values
-    loss = F.smooth_l1_loss(current_q_values.reshape_as(expected_q_values), expected_q_values)
-
-    # backpropagation of loss to NN
-    optimizer.zero_grad()
-    loss.backward()
-    optimizer.step()
-    
-#%% RUN AND SHOW THE RESULT
 
 EPISODES = 10000000  # number of episodes
 #establish the environment
@@ -163,11 +114,6 @@ env = ScaledFloatFrame(env)
 for e in range(EPISODES):
     print("episode", e)
     run_episode(e, env)
-    if e % 10 == 0:
-        print("Model saved at episode", str(e))
-        torch.save(model.state_dict(), 'checkpoint.pth')
 
 
 print('Complete')
-plt.plot(episode_durations)
-plt.show()
