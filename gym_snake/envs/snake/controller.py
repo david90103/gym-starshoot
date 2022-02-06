@@ -18,9 +18,11 @@ class Controller():
     PLAYER1_COLOR = np.array([255,0,0], dtype=np.uint8)
 
     # Agent
-    TIME_PUNISHMENT = 0.0001
-    HIT_BOX_REWARD = 0.01
-    EAT_PBOX_REWARD = 0.05
+    TIME_PUNISHMENT = 0
+    STOP_PUNISHMENT = 0.01
+    SHOOT_PUNISHMENT = 0.01
+    HIT_BOX_REWARD = 0.05
+    EAT_PBOX_REWARD = 0
 
     def __init__(self, grid_size, unit_size, unit_gap):
 
@@ -35,8 +37,10 @@ class Controller():
         self.wall_counter = self.WALL_COUNT_INIT
         self.rewards_p1 = 0
         self.rewards_p2 = 0
+        # Testing
         self.step_count = 0
-        self.eat_count = 0
+        self.hit_count = 0
+        self.prev_pos = [0, 0]
         
         for p in self.players:
             self.grid.draw_player(p)
@@ -156,6 +160,7 @@ class Controller():
                     self.p_boxes.append(PBox(box.position, 1))
                     should_remove.append(idx)
                     self.rewards_p1 += self.HIT_BOX_REWARD
+                    self.hit_count += 1
                 # Player 2
                 y = max(0, min(box.position[1]-hbs//2-1, self.grid.grid_size[1] - 1))
                 if np.array_equal(self.grid.color_of([x, y]), self.players[1].color) and idx not in should_remove:
@@ -182,7 +187,6 @@ class Controller():
                     self.grid.erase_bullet(pb)
                     should_remove.append(pbox_idx)
                     self.rewards_p1 += self.EAT_PBOX_REWARD
-                    self.eat_count += 1
                     break
                 # Player 2
                 x = max(0, min(p2.position[0]-hbs//2+i, self.grid.grid_size[0] - 1))
@@ -194,7 +198,11 @@ class Controller():
                     break
         for i in sorted(should_remove, reverse=True):
             self.p_boxes.pop(i)
-        pass
+
+    def check_stop(self):
+        if np.array_equal(self.players[0].position, self.prev_pos):
+            self.rewards_p1 -= self.STOP_PUNISHMENT
+        self.prev_pos = self.players[0].position
 
     def step(self, action):
         self.rewards_p1 -= self.TIME_PUNISHMENT
@@ -213,6 +221,7 @@ class Controller():
                 if self.players[0].mp >= 1:
                     self.players[0].mp -= 1
                     self.bullets.append(Bullet(self.players[0].position, self.players[0].color, direction))
+                    self.rewards_p1 -= self.SHOOT_PUNISHMENT
             elif act == 4:
                 self.players[1].direction = self.players[1].LEFT
             elif act == 5:
@@ -236,6 +245,7 @@ class Controller():
         self.check_gen_box()
         self.check_hit_box()
         self.check_hit_pbox()
+        self.check_stop()
         # finish, winner = self.check_kill()
         # if finish:
         #     self.done = True
@@ -248,7 +258,7 @@ class Controller():
 
         if self.step_count > 4000:
             self.done = True
-            print("Times up. Reward:", round(self.rewards_p1, 4), ", Eat:", self.eat_count)
+            print("Times up. Reward:", round(self.rewards_p1, 4), ", Hit:", self.hit_count)
         
         self.step_count += 1
 
