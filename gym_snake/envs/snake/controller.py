@@ -19,8 +19,8 @@ class Controller():
 
     # Agent
     TIME_PUNISHMENT = 0
-    STOP_PUNISHMENT = 0.01
-    SHOOT_PUNISHMENT = 0.01
+    STOP_PUNISHMENT = 0.001
+    SHOOT_PUNISHMENT = 0
     HIT_BOX_REWARD = 0.05
     EAT_PBOX_REWARD = 0
 
