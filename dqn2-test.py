@@ -17,7 +17,7 @@ BATCH_SIZE = 64  # Q-learning batch size
 
 ACTIONS = 4
 
-gpu = True
+gpu = False
 
 #%% DQN NETWORK ARCHITECTURE
 class Network(nn.Module):
@@ -39,7 +39,7 @@ class Network(nn.Module):
 
 
 model = Network()
-model.load_state_dict(torch.load("checkpoint.pth"))
+model.load_state_dict(torch.load("checkpoint.pth", map_location=torch.device('cpu')))
 if gpu:
     model.to('cuda:0')
 
@@ -78,7 +78,7 @@ def run_episode(e, environment):
     steps = 0
     start = time.time()
     while True:
-        # environment.render()
+        environment.render()
         action = select_action(torch.FloatTensor([state]))
         if gpu:
             action = action.cpu()
