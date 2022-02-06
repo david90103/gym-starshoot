@@ -3,6 +3,7 @@ import gym
 import random
 import math
 import torch
+import numpy as np
 import torch.nn as nn
 import torch.optim as optim
 from torch.autograd import Variable
@@ -16,7 +17,7 @@ EPS_START = 0.9  # e-greedy threshold start value
 EPS_END = 0.05  # e-greedy threshold end value
 EPS_DECAY = 200  # e-greedy threshold decay
 GAMMA = 0.8  # Q-learning discount factor
-LR = 0.01  # NN optimizer learning rate
+LR = 0.001  # NN optimizer learning rate
 BATCH_SIZE = 64  # Q-learning batch size
 
 ACTIONS = 4
@@ -25,41 +26,22 @@ gpu = True
 
 #%% DQN NETWORK ARCHITECTURE
 class Network(nn.Module):
-    def __init__(self):
-        nn.Module.__init__(self)
-        self.l1 = nn.Linear(12000, 1024)
-        self.l2 = nn.Linear(1024, 256)
-        self.l3 = nn.Linear(256, ACTIONS)
+    
+    def __init__(self, in_channels=3, num_actions=ACTIONS):
+        super(Network, self).__init__()
+        self.conv1 = nn.Conv2d(in_channels, 32, kernel_size=4, stride=2)
+        self.conv2 = nn.Conv2d(32, 32, kernel_size=3, stride=1)
+        self.conv3 = nn.Conv2d(32, 32, kernel_size=3, stride=1)
+        self.fc4 = nn.Linear(35 * 20 * 32, 512)
+        self.fc5 = nn.Linear(512, num_actions)
 
     def forward(self, x):
-        x = F.relu(self.l1(x))
-        x = F.relu(self.l2(x))
-        x = self.l3(x)
-        return x
+        x = F.relu(self.conv1(x))
+        x = F.relu(self.conv2(x))
+        x = F.relu(self.conv3(x))
+        x = F.relu(self.fc4(x.view(x.size(0), -1)))
+        return self.fc5(x)
 
-    # def __init__(self, action_dim = 4):
-    #     super(QNetworkCNN, self).__init__()
-
-    #     self.conv_1 = nn.Conv2d(3, 32, kernel_size=8, stride=4)
-    #     self.conv_2 = nn.Conv2d(32, 64, kernel_size=4, stride=3)
-    #     self.conv_3 = nn.Conv2d(64, 64, kernel_size=3, stride=1)
-    #     self.pool = nn.MaxPool2d(kernel_size=3)
-    #     self.fc_1 = nn.Linear(13376, 512)
-    #     self.fc_2 = nn.Linear(512, action_dim)
-
-    # def forward(self, inp):
-    #     print("f")
-    #     inp = inp.view((1, 3, 800, 500))
-    #     x1 = self.pool(F.relu(self.conv_1(inp)))
-    #     x1 = F.relu(self.conv_2(x1))
-    #     x1 = F.relu(self.conv_3(x1))
-    #     x1 = torch.flatten(x1, 1)
-    #     # print(x1.shape)
-    #     # input()
-    #     x1 = F.leaky_relu(self.fc_1(x1))
-    #     x1 = self.fc_2(x1)
-
-    #     return x1
 
 model = Network()
 if gpu:
@@ -105,23 +87,22 @@ memory = ReplayMemory(10000)
 episode_durations = []
 
 def run_episode(e, environment):
-    state = environment.reset().flatten()
+    state = environment.reset()
     steps = 0
     start = time.time()
     while True:
         # environment.render()
-        action = select_action(torch.FloatTensor([state]))
+        action = select_action(torch.FloatTensor([np.moveaxis(state, -1, 0)]))
         if gpu:
             action = action.cpu()
         next_state, reward, done, _ = environment.step(action.numpy()[0, 0])
-        next_state = next_state.flatten()
         # negative reward when attempt ends
         if done:
             reward = -10
 
-        memory.push((torch.FloatTensor([state]),
+        memory.push((torch.FloatTensor([np.moveaxis(state, -1, 0)]),
                      action,  # action is already a tensor
-                     torch.FloatTensor([next_state]),
+                     torch.FloatTensor([np.moveaxis(next_state, -1, 0)]),
                      torch.FloatTensor([reward])))
 
         learn()
@@ -176,6 +157,9 @@ env = gym.make('snake-v0')
 for e in range(EPISODES):
     print("episode", e)
     run_episode(e, env)
+    if e % 10 == 0:
+        torch.save(model.state_dict(), 'checkpoint.pth')
+
 
 print('Complete')
 plt.plot(episode_durations)

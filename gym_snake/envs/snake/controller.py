@@ -36,6 +36,7 @@ class Controller():
         self.rewards_p1 = 0
         self.rewards_p2 = 0
         self.step_count = 0
+        self.eat_count = 0
         
         for p in self.players:
             self.grid.draw_player(p)
@@ -178,16 +179,15 @@ class Controller():
                 y = max(0, min(p1.position[1]-hbs//2, self.grid.grid_size[1] - 1))
                 # Player 1
                 if np.array_equal([x, y], pb.position) and pbox_idx not in should_remove:
-                    print("p1 eat")
                     self.grid.erase_bullet(pb)
                     should_remove.append(pbox_idx)
                     self.rewards_p1 += self.EAT_PBOX_REWARD
+                    self.eat_count += 1
                     break
                 # Player 2
                 x = max(0, min(p2.position[0]-hbs//2+i, self.grid.grid_size[0] - 1))
                 y = max(0, min(p2.position[1]+hbs//2+1, self.grid.grid_size[1] - 1))
                 if np.array_equal([x, y], pb.position) and pbox_idx not in should_remove:
-                    print("p2 eat")
                     self.grid.erase_bullet(pb)
                     should_remove.append(pbox_idx)
                     self.rewards_p2 += self.EAT_PBOX_REWARD
@@ -248,7 +248,7 @@ class Controller():
 
         if self.step_count > 1000:
             self.done = True
-            print("Times up. Reward:", round(self.rewards_p1, 4))
+            print("Times up. Reward:", round(self.rewards_p1, 4), ", Eat:", self.eat_count)
         
         self.step_count += 1
 
