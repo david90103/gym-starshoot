@@ -2,10 +2,19 @@
 from __future__ import print_function
 
 import sys, gym
+import time
 import tkinter
 import gym_snake # snake-v0
+from wrappers import *
+from matplotlib import pyplot as plt
+from gym.envs.classic_control import rendering
 
 env = gym.make('snake-v0')
+# env = MaxAndSkipEnv(env)
+# env = CropFrame(env)
+# env = ImageToPyTorch(env)
+# env = BufferWrapper(env, 4)
+# env = ScaledFloatFrame(env)
 
 if not hasattr(env.action_space, 'n'):
     raise Exception('Keyboard agent only supports discrete action spaces')
@@ -17,6 +26,18 @@ SKIP_CONTROL = 0    # Use previous control decision SKIP_CONTROL times, that's h
 human_agent_action = 0
 human_wants_restart = False
 human_sets_pause = False
+
+# viewer = rendering.SimpleImageViewer() 
+# fig = plt.figure()
+# viewer = fig.add_subplot(111)
+# viewer1 = fig.add_subplot(221)
+# viewer2 = fig.add_subplot(222)
+# viewer3 = fig.add_subplot(223)
+# viewer4 = fig.add_subplot(224)
+# viewer.get_xaxis().set_visible(False)
+# viewer.get_yaxis().set_visible(False)
+# plt.ion()
+# fig.show()
 
 def key_press(event):
     global human_agent_action, human_wants_restart, human_sets_pause
@@ -51,6 +72,16 @@ def rollout(env):
             skip -= 1
 
         obser, r, done, info = env.step(a)
+
+        # viewer1.clear()
+        # viewer2.clear()
+        # viewer3.clear()
+        # viewer4.clear()
+        # viewer1.imshow(obser[0], cmap='gray')
+        # viewer2.imshow(obser[1], cmap='gray')
+        # viewer3.imshow(obser[2], cmap='gray')
+        # viewer4.imshow(obser[3], cmap='gray')
+        # plt.pause(0.01)
         human_agent_action = 0
         env.render()
         if done: break

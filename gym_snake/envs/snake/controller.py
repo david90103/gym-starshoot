@@ -19,9 +19,9 @@ class Controller():
 
     # Agent
     TIME_PUNISHMENT = 0
-    STOP_PUNISHMENT = 0.001
+    HIT_WALL_PUNISHMENT = 0.001
     SHOOT_PUNISHMENT = 0
-    HIT_BOX_REWARD = 0.05
+    HIT_BOX_REWARD = 0.1
     EAT_PBOX_REWARD = 0
 
     def __init__(self, grid_size, unit_size, unit_gap):
@@ -54,7 +54,8 @@ class Controller():
             player.position = np.asarray([self.bounded_x(player.position[0]+player.MOVE_SPEED), player.position[1]]).astype(np.int)
         elif player.direction == player.LEFT:
             player.position = np.asarray([self.bounded_x(player.position[0]-player.MOVE_SPEED), player.position[1]]).astype(np.int)
-
+        if player.position[0] == 0 or player.position[0] == self.grid.grid_size[0]:
+            self.rewards_p1 -= self.HIT_WALL_PUNISHMENT
         self.grid.draw_player(player)
     
     def bounded_x(self, position):
@@ -199,10 +200,10 @@ class Controller():
         for i in sorted(should_remove, reverse=True):
             self.p_boxes.pop(i)
 
-    def check_stop(self):
-        if np.array_equal(self.players[0].position, self.prev_pos):
-            self.rewards_p1 -= self.STOP_PUNISHMENT
-        self.prev_pos = self.players[0].position
+    # def check_stop(self):
+    #     if np.array_equal(self.players[0].position, self.prev_pos):
+    #         self.rewards_p1 -= self.STOP_PUNISHMENT
+    #     self.prev_pos = self.players[0].position
 
     def step(self, action):
         self.rewards_p1 -= self.TIME_PUNISHMENT
@@ -212,25 +213,25 @@ class Controller():
             action = [action]
 
         for i, act in enumerate(action):
-            if act == 1:
+            if act == 0:
                 self.players[0].direction = self.players[0].LEFT
-            elif act == 2:
+            elif act == 1:
                 self.players[0].direction = self.players[0].RIGHT
-            elif act == 3:
+            elif act == 2:
                 direction = -1
                 if self.players[0].mp >= 1:
                     self.players[0].mp -= 1
                     self.bullets.append(Bullet(self.players[0].position, self.players[0].color, direction))
                     self.rewards_p1 -= self.SHOOT_PUNISHMENT
-            elif act == 4:
-                self.players[1].direction = self.players[1].LEFT
-            elif act == 5:
-                self.players[1].direction = self.players[1].RIGHT
-            elif act == 6:
-                direction = 1 
-                if self.players[1].mp >= 1:
-                    self.players[1].mp -= 1
-                    self.bullets.append(Bullet(self.players[1].position, self.players[1].color, direction))
+            # elif act == 4:
+            #     self.players[1].direction = self.players[1].LEFT
+            # elif act == 5:
+            #     self.players[1].direction = self.players[1].RIGHT
+            # elif act == 6:
+            #     direction = 1 
+            #     if self.players[1].mp >= 1:
+            #         self.players[1].mp -= 1
+            #         self.bullets.append(Bullet(self.players[1].position, self.players[1].color, direction))
 
         for i in range(len(self.players)):
             self.add_mp(i)
@@ -245,7 +246,7 @@ class Controller():
         self.check_gen_box()
         self.check_hit_box()
         self.check_hit_pbox()
-        self.check_stop()
+        # self.check_stop()
         # finish, winner = self.check_kill()
         # if finish:
         #     self.done = True

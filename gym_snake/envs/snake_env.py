@@ -20,7 +20,7 @@ class SnakeEnv(gym.Env):
         self.unit_size = unit_size
         self.unit_gap = unit_gap
         self.viewer = None
-        self.action_space = Discrete(4)
+        self.action_space = Discrete(3)
         self.observation_space = spaces.Box(low=0, high=255, shape=(grid_size[1], grid_size[0], 3), dtype=np.uint8)
         self.random_init = random_init
 
