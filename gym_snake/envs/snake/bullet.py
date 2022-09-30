@@ -8,6 +8,7 @@ class Bullet():
     PATH_RENDER_LIMIT = 50
     UP = 1
     DOWN = -1
+    NORMAL_BULLET = 1
 
     def __init__(self, coord_start, color, direction):
 
@@ -16,6 +17,7 @@ class Bullet():
         self.direction = direction
         self.path_idx = 0
         self.fullpath = self.normal_path()
+        self.bullet_type = self.NORMAL_BULLET
 
     
     def normal_path(self):

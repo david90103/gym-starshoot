@@ -19,10 +19,10 @@ class Controller():
 
     # Agent
     TIME_PUNISHMENT = 0
-    HIT_WALL_PUNISHMENT = 0.001
+    HIT_WALL_PUNISHMENT = 0.01
     SHOOT_PUNISHMENT = 0
-    HIT_BOX_REWARD = 0.1
-    EAT_PBOX_REWARD = 0
+    HIT_BOX_REWARD = 1
+    EAT_PBOX_REWARD = 2
 
     def __init__(self, grid_size, unit_size, unit_gap):
 
@@ -41,6 +41,7 @@ class Controller():
         self.step_count = 0
         self.hit_count = 0
         self.prev_pos = [0, 0]
+        self.box_gened = 0
         
         for p in self.players:
             self.grid.draw_player(p)
@@ -141,6 +142,7 @@ class Controller():
     
     def check_gen_box(self):
         if len(self.boxes) < 2 and random.uniform(0, 1) < self.GEN_BOX_PROB:
+            self.box_gened += 1
             direction = random.randint(0, 1)
             if direction == 0:
                 direction = -1
@@ -205,6 +207,58 @@ class Controller():
     #         self.rewards_p1 -= self.STOP_PUNISHMENT
     #     self.prev_pos = self.players[0].position
 
+    def get_obs(self):
+
+        # [ player_x, player_y, player_direct, player_mp, opponent_x, opponent_y, opponent_direct, opponent_mp = 8
+        #   box_x, box_y, box_direct, box_speed ...*3 = 12 
+        # ]
+
+        # TODO
+        # [
+        #   p_box_x, p_box_y, p_box_direct ...*3 = 9
+        #   bullet_x, bullet_y, bullet_color, bullet_direct, bullet_type ...*3 = 15
+        # ]
+        
+        # TODO Normalize all values
+
+        obs = np.zeros(20) # 44
+        p = self.players[0]
+        o = self.players[1]
+        # Player and Opponent
+        obs[0:8] = [p.position[0], p.position[1], p.direction, p.mp, o.position[0], o.position[1], o.direction, o.mp]
+        # Boxes
+        offset = 8
+        c = 0
+        for b in self.boxes:
+            if c >= 3:
+                break
+            obs[offset: offset+4] = [b.position[0], b.position[1], b.direction, b.box_speed]
+            offset += 4
+            c += 1
+        # P Boxes
+        # offset = 20
+        # c = 0
+        # for b in self.p_boxes:
+        #     if c >= 3:
+        #         break
+        #     obs[offset: offset+3] = [b.position[0], b.position[1], b.direction]
+        #     offset += 3
+        #     c += 1
+        # # Bullets
+        # offset = 29
+        # c = 0
+        # for b in self.bullets:
+        #     if c >= 3:
+        #         break
+        #     color = 0
+        #     if np.equal(b.color, self.PLAYER0_COLOR).all():
+        #         color = 1
+        #     obs[offset: offset+5] = [b.position[0], b.position[1], b.direction, color, b.bullet_type]
+        #     offset += 5
+        #     c += 1
+
+        return obs
+
     def step(self, action):
         self.rewards_p1 -= self.TIME_PUNISHMENT
         self.rewards_p2 -= self.TIME_PUNISHMENT
@@ -257,10 +311,10 @@ class Controller():
         #     self.done = True
         #     print("Times up. Reward:", round(self.rewards_p1, 4))
 
-        if self.step_count > 4000:
+        if self.step_count > 1000:
             self.done = True
             print("Times up. Reward:", round(self.rewards_p1, 4), ", Hit:", self.hit_count)
         
         self.step_count += 1
 
-        return self.grid.grid.copy(), self.rewards_p1, self.done, {"snakes_remaining":1}
+        return self.get_obs(), self.rewards_p1, self.done, {"snakes_remaining":1}

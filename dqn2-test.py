@@ -2,6 +2,7 @@ import time
 import gym
 import random
 import math
+import sys
 import torch
 import numpy as np
 import torch.nn as nn
@@ -11,35 +12,31 @@ import torch.nn.functional as F
 import matplotlib.pyplot as plt
 
 import gym_snake
-from wrappers import *
+from wrappers1d import *
 
 BATCH_SIZE = 64  # Q-learning batch size
 
-ACTIONS = 4
+ACTIONS = 3
 
 gpu = False
 
 #%% DQN NETWORK ARCHITECTURE
 class Network(nn.Module):
-    
-    def __init__(self, in_channels=4, num_actions=ACTIONS):
-        super(Network, self).__init__()
-        self.conv1 = nn.Conv2d(in_channels, 32, kernel_size=6, stride=3)
-        self.conv2 = nn.Conv2d(32, 64, kernel_size=4, stride=1)
-        self.conv3 = nn.Conv2d(64, 64, kernel_size=3, stride=1)
-        self.fc4 = nn.Linear(7*7*64, 512)
-        self.fc5 = nn.Linear(512, num_actions)
+    def __init__(self):
+        nn.Module.__init__(self)
+        self.l1 = nn.Linear(20, 5)
+        self.l2 = nn.Linear(5, 5)
+        self.l3 = nn.Linear(5, ACTIONS)
 
     def forward(self, x):
-        x = F.relu(self.conv1(x))
-        x = F.relu(self.conv2(x))
-        x = F.relu(self.conv3(x))
-        x = F.relu(self.fc4(x.view(x.size(0), -1)))
-        return self.fc5(x)
+        x = F.relu(self.l1(x))
+        x = F.relu(self.l2(x))
+        x = self.l3(x)
+        return x
 
 
 model = Network()
-model.load_state_dict(torch.load("checkpoint.pth", map_location=torch.device('cpu')))
+model.load_state_dict(torch.load("checkpoints/" + sys.argv[1] + ".pth", map_location=torch.device('cpu')))
 if gpu:
     model.to('cuda:0')
 
@@ -78,14 +75,14 @@ def run_episode(e, environment):
     steps = 0
     start = time.time()
     while True:
-        environment.render()
+        # environment.render()
         action = select_action(torch.FloatTensor([state]))
         if gpu:
             action = action.cpu()
         next_state, reward, done, _ = environment.step(action.numpy()[0, 0])
         # negative reward when attempt ends
-        if done:
-            reward = -10
+        # if done:
+        #     reward = -10
 
         memory.push((torch.FloatTensor([state]),
                      action,  # action is already a tensor
@@ -106,10 +103,6 @@ EPISODES = 10000000  # number of episodes
 #establish the environment
 env = gym.make('snake-v0')
 env = MaxAndSkipEnv(env)
-env = CropFrame(env)
-env = ImageToPyTorch(env) 
-env = BufferWrapper(env, 4)
-env = ScaledFloatFrame(env)
 
 for e in range(EPISODES):
     print("episode", e)

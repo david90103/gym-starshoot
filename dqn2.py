@@ -10,6 +10,7 @@ import torch.nn.functional as F
 import matplotlib.pyplot as plt
 
 import gym_snake
+from wrappers1d import *
 
 # hyper parameters
 EPS_START = 0.9  # e-greedy threshold start value
@@ -19,17 +20,17 @@ GAMMA = 0.8  # Q-learning discount factor
 LR = 0.01  # NN optimizer learning rate
 BATCH_SIZE = 64  # Q-learning batch size
 
-ACTIONS = 4
+ACTIONS = 3
 
-gpu = True
+gpu = False
 
 #%% DQN NETWORK ARCHITECTURE
 class Network(nn.Module):
     def __init__(self):
         nn.Module.__init__(self)
-        self.l1 = nn.Linear(12000, 1024)
-        self.l2 = nn.Linear(1024, 256)
-        self.l3 = nn.Linear(256, ACTIONS)
+        self.l1 = nn.Linear(20, 5)
+        self.l2 = nn.Linear(5, 5)
+        self.l3 = nn.Linear(5, ACTIONS)
 
     def forward(self, x):
         x = F.relu(self.l1(x))
@@ -103,11 +104,15 @@ class ReplayMemory:
 #%%
 memory = ReplayMemory(10000)
 episode_durations = []
+plot = []
+best_reward = -999
 
 def run_episode(e, environment):
+    global best_reward
     state = environment.reset().flatten()
     steps = 0
     start = time.time()
+    
     while True:
         # environment.render()
         action = select_action(torch.FloatTensor([state]))
@@ -116,8 +121,8 @@ def run_episode(e, environment):
         next_state, reward, done, _ = environment.step(action.numpy()[0, 0])
         next_state = next_state.flatten()
         # negative reward when attempt ends
-        if done:
-            reward = -10
+        # if done:
+        #     reward = -10
 
         memory.push((torch.FloatTensor([state]),
                      action,  # action is already a tensor
@@ -133,6 +138,17 @@ def run_episode(e, environment):
             #print("{2} Episode {0} finished after {1} steps".format(e, steps, '\033[92m' if steps >= 195 else '\033[99m'))
             print("Episode {0} finished after {1} steps, time used {2}".format(e, steps, time.time() - start))
             episode_durations.append(steps)
+
+            # plot reward
+            plot.append(reward)
+            plt.plot(plot, 'c')
+            plt.savefig('reward.png')
+
+            # save best model
+            if reward > best_reward and reward >= 20:
+                torch.save(model.state_dict(), 'checkpoints/' + str(int(reward)) + '.pth')
+                best_reward = reward
+
             break
             
 #%% TRAIN THE MODEL
@@ -172,6 +188,8 @@ def learn():
 EPISODES = 10000000  # number of episodes
 #establish the environment
 env = gym.make('snake-v0')
+env = MaxAndSkipEnv(env)
+# env = BufferWrapper(env, 4)
 
 for e in range(EPISODES):
     print("episode", e)

@@ -30,7 +30,8 @@ class SnakeEnv(gym.Env):
 
     def reset(self):
         self.controller = Controller(self.grid_size, self.unit_size, self.unit_gap)
-        self.last_obs = self.controller.grid.grid.copy()
+        # self.last_obs = self.controller.grid.grid.copy()
+        self.last_obs = np.zeros(20) # 44
         return self.last_obs
 
     def render(self, mode='rgb_array', close=False, frame_speed=.01):

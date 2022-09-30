@@ -1,3 +1,4 @@
+import time
 import gym
 import torch
 import numpy as np
@@ -24,14 +25,16 @@ class QNetwork(nn.Module):
         super(QNetwork, self).__init__()
 
         self.fc_1 = nn.Linear(state_dim, hidden_dim)
-        self.fc_2 = nn.Linear(hidden_dim, hidden_dim)
-        self.fc_3 = nn.Linear(hidden_dim, action_dim)
+        self.fc_2 = nn.Linear(hidden_dim, 512)
+        # self.fc_3 = nn.Linear(512, 256)
+        self.fc_4 = nn.Linear(512, action_dim)
 
     def forward(self, inp):
 
-        x1 = F.leaky_relu(self.fc_1(inp))
+        x1 = F.leaky_relu(self.fc_1(inp.flatten()))
         x1 = F.leaky_relu(self.fc_2(x1))
-        x1 = self.fc_3(x1)
+        # x1 = F.leaky_relu(self.fc_3(x1))
+        x1 = self.fc_4(x1)
 
         return x1
 
@@ -113,7 +116,9 @@ def select_action(model, env, state, eps):
 
 def train(batch_size, current, target, optim, memory, gamma):
 
+    start = time.time()
     states, actions, next_states, rewards, is_done = memory.sample(batch_size)
+    print(time.time() - start)
 
     q_values = current(states)
 
@@ -157,8 +162,8 @@ def update_parameters(current_model, target_model):
 
 
 def main(gamma=0.99, lr=1e-3, min_episodes=20, eps=1, eps_decay=0.995, eps_min=0.01, update_step=10, batch_size=64, update_repeats=50,
-         num_episodes=30000, seed=42, max_memory_size=50000, lr_gamma=0.9, lr_step=100, measure_step=100,
-         measure_repeats=20, hidden_dim=64, env_name='snake-v0', cnn=True, horizon=np.inf, render=False, render_step=50):
+         num_episodes=30000, seed=42, max_memory_size=10000, lr_gamma=0.9, lr_step=100, measure_step=100,
+         measure_repeats=20, hidden_dim=1024, env_name='snake-v0', cnn=True, horizon=np.inf, render=False, render_step=50):
     """
     :param gamma: reward discount factor
     :param lr: learning rate for the Q-Network
@@ -198,9 +203,9 @@ def main(gamma=0.99, lr=1e-3, min_episodes=20, eps=1, eps_decay=0.995, eps_min=0
         Q_1 = QNetworkCNN(action_dim=env.action_space.n).to(device)
         Q_2 = QNetworkCNN(action_dim=env.action_space.n).to(device)
     else:
-        Q_1 = QNetwork(action_dim=env.action_space.n, state_dim=env.observation_space.shape[0],
+        Q_1 = QNetwork(action_dim=env.action_space.n, state_dim=6400,
                                         hidden_dim=hidden_dim).to(device)
-        Q_2 = QNetwork(action_dim=env.action_space.n, state_dim=env.observation_space.shape[0],
+        Q_2 = QNetwork(action_dim=env.action_space.n, state_dim=6400,
                                         hidden_dim=hidden_dim).to(device)
     # transfer parameters from Q_1 to Q_2
     update_parameters(Q_1, Q_2)
