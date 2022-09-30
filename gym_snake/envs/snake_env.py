@@ -25,12 +25,12 @@ class SnakeEnv(gym.Env):
         self.random_init = random_init
 
     def step(self, action):
-        self.last_obs, rewards, done, info = self.controller.step(action)
+        self.last_obs, self.last_grid_obs, rewards, done, info = self.controller.step(action)
         return self.last_obs, rewards, done, info
 
     def reset(self):
         self.controller = Controller(self.grid_size, self.unit_size, self.unit_gap)
-        # self.last_obs = self.controller.grid.grid.copy()
+        self.last_grid_obs = self.controller.grid.grid.copy()
         self.last_obs = np.zeros(20) # 44
         return self.last_obs
 
@@ -46,7 +46,7 @@ class SnakeEnv(gym.Env):
                 self.fig.show()
             else:
                 self.viewer.clear()
-                self.viewer.imshow(self.last_obs)
+                self.viewer.imshow(self.last_grid_obs)
                 plt.pause(frame_speed)
             self.fig.canvas.draw()
         elif mode == 'view_only':
@@ -54,11 +54,11 @@ class SnakeEnv(gym.Env):
             if self.viewer is None:
                 self.viewer = rendering.SimpleImageViewer()
             else:
-                self.viewer.imshow(self.last_obs)
+                self.viewer.imshow(self.last_grid_obs)
             time.sleep(0.1)
             return self.viewer.isopen
         elif mode == 'rgb_array':
-            return self.last_obs
+            return self.last_grid_obs
 
     def seed(self, x):
         pass

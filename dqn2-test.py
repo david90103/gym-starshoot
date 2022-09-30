@@ -75,7 +75,7 @@ def run_episode(e, environment):
     steps = 0
     start = time.time()
     while True:
-        # environment.render()
+        # environment.render(mode='view_only')
         action = select_action(torch.FloatTensor([state]))
         if gpu:
             action = action.cpu()

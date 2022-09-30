@@ -317,4 +317,4 @@ class Controller():
         
         self.step_count += 1
 
-        return self.get_obs(), self.rewards_p1, self.done, {"snakes_remaining":1}
+        return self.get_obs(), self.grid.grid.copy(), self.rewards_p1, self.done, {"snakes_remaining":1}
