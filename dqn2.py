@@ -28,9 +28,9 @@ gpu = False
 class Network(nn.Module):
     def __init__(self):
         nn.Module.__init__(self)
-        self.l1 = nn.Linear(20, 5)
-        self.l2 = nn.Linear(5, 5)
-        self.l3 = nn.Linear(5, ACTIONS)
+        self.l1 = nn.Linear(80, 10)
+        self.l2 = nn.Linear(10, 10)
+        self.l3 = nn.Linear(10, ACTIONS)
 
     def forward(self, x):
         x = F.relu(self.l1(x))
@@ -102,10 +102,10 @@ class ReplayMemory:
         return len(self.memory)
 
 #%%
-memory = ReplayMemory(10000)
+memory = ReplayMemory(2000)
 episode_durations = []
 plot = []
-best_reward = -999
+best_reward = -99999
 
 def run_episode(e, environment):
     global best_reward
@@ -145,9 +145,13 @@ def run_episode(e, environment):
             plt.savefig('reward.png')
 
             # save best model
-            if reward > best_reward and reward >= 20:
-                torch.save(model.state_dict(), 'checkpoints/' + str(int(reward)) + '.pth')
+            if reward > best_reward:
+                torch.save(model.state_dict(), 'checkpoints/best.pth')
                 best_reward = reward
+
+            # save other model for testing
+            # if reward > 15:
+            #     torch.save(model.state_dict(), 'checkpoints/' + str(int(reward)) + '.pth')
 
             break
             
@@ -189,7 +193,7 @@ EPISODES = 10000000  # number of episodes
 #establish the environment
 env = gym.make('snake-v0')
 env = MaxAndSkipEnv(env)
-# env = BufferWrapper(env, 4)
+env = BufferWrapper(env, 4)
 
 for e in range(EPISODES):
     print("episode", e)

@@ -24,9 +24,9 @@ gpu = False
 class Network(nn.Module):
     def __init__(self):
         nn.Module.__init__(self)
-        self.l1 = nn.Linear(20, 5)
-        self.l2 = nn.Linear(5, 5)
-        self.l3 = nn.Linear(5, ACTIONS)
+        self.l1 = nn.Linear(80, 10)
+        self.l2 = nn.Linear(10, 10)
+        self.l3 = nn.Linear(10, ACTIONS)
 
     def forward(self, x):
         x = F.relu(self.l1(x))
@@ -103,6 +103,7 @@ EPISODES = 10000000  # number of episodes
 #establish the environment
 env = gym.make('snake-v0')
 env = MaxAndSkipEnv(env)
+env = BufferWrapper(env, 4)
 
 for e in range(EPISODES):
     print("episode", e)

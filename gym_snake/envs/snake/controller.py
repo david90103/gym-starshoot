@@ -19,10 +19,12 @@ class Controller():
 
     # Agent
     TIME_PUNISHMENT = 0
-    HIT_WALL_PUNISHMENT = 0.01
-    SHOOT_PUNISHMENT = 0
-    HIT_BOX_REWARD = 1
+    NEAR_WALL_PUNISHMENT = 0.1
+    SHOOT_PUNISHMENT = -0.1
+    SHOOT_NOTHING_PUNISHMENT = 0.1
+    HIT_BOX_REWARD = 2
     EAT_PBOX_REWARD = 2
+    STAND_MID_REWARD = 0.2
 
     def __init__(self, grid_size, unit_size, unit_gap):
 
@@ -55,8 +57,10 @@ class Controller():
             player.position = np.asarray([self.bounded_x(player.position[0]+player.MOVE_SPEED), player.position[1]]).astype(np.int)
         elif player.direction == player.LEFT:
             player.position = np.asarray([self.bounded_x(player.position[0]-player.MOVE_SPEED), player.position[1]]).astype(np.int)
-        if player.position[0] == 0 or player.position[0] == self.grid.grid_size[0]:
-            self.rewards_p1 -= self.HIT_WALL_PUNISHMENT
+        if player.position[0] <= 2 or player.position[0] >= self.grid.grid_size[0]-2:
+            self.rewards_p1 -= self.NEAR_WALL_PUNISHMENT
+        if player.position[0] > self.grid.grid_size[0] / 4 and player.position[0] < self.grid.grid_size[0] * 3 / 4:
+            self.rewards_p1 += self.STAND_MID_REWARD
         self.grid.draw_player(player)
     
     def bounded_x(self, position):
@@ -277,6 +281,8 @@ class Controller():
                     self.players[0].mp -= 1
                     self.bullets.append(Bullet(self.players[0].position, self.players[0].color, direction))
                     self.rewards_p1 -= self.SHOOT_PUNISHMENT
+                else:
+                    self.rewards_p1 -= self.SHOOT_NOTHING_PUNISHMENT
             # elif act == 4:
             #     self.players[1].direction = self.players[1].LEFT
             # elif act == 5:
