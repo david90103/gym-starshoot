@@ -24,9 +24,9 @@ gpu = False
 class Network(nn.Module):
     def __init__(self):
         nn.Module.__init__(self)
-        self.l1 = nn.Linear(80, 10)
-        self.l2 = nn.Linear(10, 10)
-        self.l3 = nn.Linear(10, ACTIONS)
+        self.l1 = nn.Linear(32, 60)
+        self.l2 = nn.Linear(60, 60)
+        self.l3 = nn.Linear(60, ACTIONS)
 
     def forward(self, x):
         x = F.relu(self.l1(x))
@@ -48,26 +48,8 @@ def select_action(state):
     if gpu:
         data = data.to('cuda:0')
     return model(data).data.max(1)[1].view(1, 1)
-    
-#%% MEMORY REPLAY
-class ReplayMemory:
-    def __init__(self, capacity):
-        self.capacity = capacity
-        self.memory = []
-
-    def push(self, transition):
-        self.memory.append(transition)
-        if len(self.memory) > self.capacity:
-            del self.memory[0]
-
-    def sample(self, batch_size):
-        return random.sample(self.memory, batch_size)
-
-    def __len__(self):
-        return len(self.memory)
 
 #%%
-memory = ReplayMemory(10000)
 episode_durations = []
 
 def run_episode(e, environment):
@@ -83,11 +65,6 @@ def run_episode(e, environment):
         # negative reward when attempt ends
         # if done:
         #     reward = -10
-
-        memory.push((torch.FloatTensor([state]),
-                     action,  # action is already a tensor
-                     torch.FloatTensor([next_state]),
-                     torch.FloatTensor([reward])))
 
         state = next_state
         steps += 1

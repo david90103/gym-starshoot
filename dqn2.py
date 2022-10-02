@@ -28,9 +28,9 @@ gpu = False
 class Network(nn.Module):
     def __init__(self):
         nn.Module.__init__(self)
-        self.l1 = nn.Linear(80, 10)
-        self.l2 = nn.Linear(10, 10)
-        self.l3 = nn.Linear(10, ACTIONS)
+        self.l1 = nn.Linear(32, 64)
+        self.l2 = nn.Linear(64, 64)
+        self.l3 = nn.Linear(64, ACTIONS)
 
     def forward(self, x):
         x = F.relu(self.l1(x))
@@ -155,6 +155,7 @@ def run_episode(e, environment):
             # save other model for testing
             # if reward > 15:
             #     torch.save(model.state_dict(), 'checkpoints/' + str(int(reward)) + '.pth')
+            torch.save(model.state_dict(), 'checkpoints/tmp.pth')
 
             break
             

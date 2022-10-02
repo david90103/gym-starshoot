@@ -31,12 +31,12 @@ class BufferWrapper(gym.ObservationWrapper):
         # FIXME I HAVE NO IDEA WHAT I AM DOING... HEHE
         # old_space = env.observation_space
         # self.observation_space = gym.spaces.Box(old_space.low.repeat(n_steps, axis=0),old_space.high.repeat(n_steps, axis=0), dtype=dtype)
-        self.observation_space = gym.spaces.Discrete(20 * n_steps)
+        self.observation_space = gym.spaces.Discrete(8 * n_steps)
     def reset(self):
         # self.buffer = np.zeros_like(self.observation_space.low, dtype=self.dtype)
-        self.buffer = np.zeros(20 * 4, dtype=self.dtype)
+        self.buffer = np.zeros(8 * 4, dtype=self.dtype)
         return self.observation(self.env.reset())
     def observation(self, observation):
-        self.buffer = self.buffer[20:]
+        self.buffer = self.buffer[8:]
         self.buffer = np.append(self.buffer, observation)
         return self.buffer

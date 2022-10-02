@@ -215,31 +215,31 @@ class Controller():
     def get_obs(self):
 
         # [ player_x, player_y, player_direct, player_mp, opponent_x, opponent_y, opponent_direct, opponent_mp = 8
-        #   box_x, box_y, box_direct, box_speed ...*3 = 12 
         # ]
 
         # TODO
         # [
+        #   box_x, box_y, box_direct, box_speed ...*3 = 12 
         #   p_box_x, p_box_y, p_box_direct ...*3 = 9
         #   bullet_x, bullet_y, bullet_color, bullet_direct, bullet_type ...*3 = 15
         # ]
         
         # TODO Normalize all values
 
-        obs = np.zeros(20) # 44
+        obs = np.zeros(8) # 44
         p = self.players[0]
         o = self.players[1]
         # Player and Opponent
         obs[0:8] = [p.position[0], p.position[1], p.direction, p.mp, o.position[0], o.position[1], o.direction, o.mp]
         # Boxes
-        offset = 8
-        c = 0
-        for b in self.boxes:
-            if c >= 3:
-                break
-            obs[offset: offset+4] = [b.position[0], b.position[1], b.direction, b.box_speed]
-            offset += 4
-            c += 1
+        # offset = 8
+        # c = 0
+        # for b in self.boxes:
+        #     if c >= 3:
+        #         break
+        #     obs[offset: offset+4] = [b.position[0], b.position[1], b.direction, b.box_speed]
+        #     offset += 4
+        #     c += 1
         # P Boxes
         # offset = 20
         # c = 0
@@ -250,7 +250,7 @@ class Controller():
         #     offset += 3
         #     c += 1
         # # Bullets
-        # offset = 29
+        # offset = 23
         # c = 0
         # for b in self.bullets:
         #     if c >= 3:
@@ -310,10 +310,12 @@ class Controller():
         # self.check_stop()
         finish, winner = self.check_kill()
         if finish:
-            self.done = True
+            # self.done = True
             # self.rewards_p1 = self.rewards_p1 + 10 if winner == 0 else self.rewards_p1 - 10
-            self.rewards_p1 = self.rewards_p1 + 10
-            print("Player", winner, "is the winner. Reward:", round(self.rewards_p1, 4))
+            # self.rewards_p1 = self.rewards_p1 + 1 + (1000 - self.step_count) / 1000
+            self.rewards_p1 += 1
+            self.hit_count += 1
+            # print("Player", winner, "is the winner. Reward:", round(self.rewards_p1, 4))
         
         # if self.rewards_p1 < -0.1:
         #     self.done = True
@@ -321,7 +323,7 @@ class Controller():
 
         if self.step_count > 1000:
             self.done = True
-            self.rewards_p1 = 0
+            # self.rewards_p1 = 0
             print("Times up. Reward:", round(self.rewards_p1, 4), ", Hit:", self.hit_count)
         
         self.step_count += 1

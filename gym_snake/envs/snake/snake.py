@@ -11,7 +11,7 @@ class Snake():
 
     def __init__(self, id, coord_start, color):
         self.id = id
-        self.direction = self.RIGHT
+        self.direction = self.STOP if id == 1 else self.LEFT
         self.position = np.asarray(coord_start).astype(np.int)
         self.color = color
         self.mp = 0

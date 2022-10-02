@@ -22,7 +22,7 @@ class SnakeEnv(gym.Env):
         self.viewer = None
         self.action_space = Discrete(3)
         # self.observation_space = spaces.Box(low=0, high=255, shape=(grid_size[1], grid_size[0], 3), dtype=np.uint8)
-        self.observation_space = spaces.Discrete(20)
+        self.observation_space = spaces.Discrete(8)
         self.random_init = random_init
 
     def step(self, action):
@@ -32,7 +32,7 @@ class SnakeEnv(gym.Env):
     def reset(self):
         self.controller = Controller(self.grid_size, self.unit_size, self.unit_gap)
         self.last_grid_obs = self.controller.grid.grid.copy()
-        self.last_obs = np.zeros(20) # 44
+        self.last_obs = np.zeros(8) # 44
         return self.last_obs
 
     def render(self, mode='rgb_array', close=False, frame_speed=.01):
