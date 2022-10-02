@@ -20,7 +20,7 @@ class Controller():
     # Agent
     TIME_PUNISHMENT = 0
     NEAR_WALL_PUNISHMENT = 0.1
-    SHOOT_PUNISHMENT = -0.1
+    SHOOT_PUNISHMENT = -0.3
     SHOOT_NOTHING_PUNISHMENT = 0.1
     HIT_BOX_REWARD = 2
     EAT_PBOX_REWARD = 2
@@ -150,7 +150,8 @@ class Controller():
             direction = random.randint(0, 1)
             if direction == 0:
                 direction = -1
-            xpos = 0 if direction == 1 else self.grid.grid_size[0] - 1
+            # xpos = 0 if direction == 1 else self.grid.grid_size[0] - 1
+            xpos = random.uniform(5, self.grid.grid_size[0] - 5)
             ypad = random.uniform(-10, +10)
             self.boxes.append(Box([xpos, self.grid.grid_size[1] // 2 + ypad], direction))
 

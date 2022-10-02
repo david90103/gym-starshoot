@@ -102,7 +102,7 @@ class ReplayMemory:
         return len(self.memory)
 
 #%%
-memory = ReplayMemory(2000)
+memory = ReplayMemory(10000)
 episode_durations = []
 plot = []
 best_reward = -99999
@@ -140,9 +140,12 @@ def run_episode(e, environment):
             episode_durations.append(steps)
 
             # plot reward
-            plot.append(reward)
-            plt.plot(plot, 'c')
-            plt.savefig('reward.png')
+            # plot.append(reward)
+            # plt.plot(plot, 'c')
+            # plt.savefig('reward.png')
+
+            with open('reward.txt', 'a') as f:
+                f.write(str(reward) + '\n')
 
             # save best model
             if reward > best_reward:
@@ -194,6 +197,9 @@ EPISODES = 10000000  # number of episodes
 env = gym.make('snake-v0')
 env = MaxAndSkipEnv(env)
 env = BufferWrapper(env, 4)
+
+with open('reward.txt', 'w') as f:
+    pass
 
 for e in range(EPISODES):
     print("episode", e)

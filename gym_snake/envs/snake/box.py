@@ -15,7 +15,8 @@ class Box():
         self.position = np.asarray(coord_start).astype(np.int)
         self.color = self.BOX_COLOR
         self.path_idx = 0
-        self.box_speed = random.choice([0.5, 1])
+        # self.box_speed = random.choice([0.5, 1])
+        self.box_speed = 0
         self.fullpath = self.normal_path()
     
     def normal_path(self):
