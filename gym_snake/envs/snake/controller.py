@@ -19,12 +19,12 @@ class Controller():
 
     # Agent
     TIME_PUNISHMENT = 0
-    NEAR_WALL_PUNISHMENT = 0.1
-    SHOOT_PUNISHMENT = -0.3
-    SHOOT_NOTHING_PUNISHMENT = 0.1
-    HIT_BOX_REWARD = 2
-    EAT_PBOX_REWARD = 2
-    STAND_MID_REWARD = 0.2
+    NEAR_WALL_PUNISHMENT = 0
+    SHOOT_PUNISHMENT = 0
+    SHOOT_NOTHING_PUNISHMENT = 0
+    HIT_BOX_REWARD = 0
+    EAT_PBOX_REWARD = 0
+    STAND_MID_REWARD = 0
 
     def __init__(self, grid_size, unit_size, unit_gap):
 
@@ -301,18 +301,19 @@ class Controller():
             # rewards.append(self.move_result(direction, i))
 
         self.move_bullets()
-        self.move_boxes()
-        self.move_pboxes()
+        # self.move_boxes()
+        # self.move_pboxes()
         self.check_shrink_wall()
-        self.check_gen_box()
-        self.check_hit_box()
-        self.check_hit_pbox()
+        # self.check_gen_box()
+        # self.check_hit_box()
+        # self.check_hit_pbox()
         # self.check_stop()
-        # finish, winner = self.check_kill()
-        # if finish:
-        #     self.done = True
-        #     self.rewards_p1 = self.rewards_p1 + 10 if winner == 0 else self.rewards_p1 - 10
-        #     print("Player", winner, "is the winner. Reward:", round(self.rewards_p1, 4))
+        finish, winner = self.check_kill()
+        if finish:
+            self.done = True
+            # self.rewards_p1 = self.rewards_p1 + 10 if winner == 0 else self.rewards_p1 - 10
+            self.rewards_p1 = self.rewards_p1 + 10
+            print("Player", winner, "is the winner. Reward:", round(self.rewards_p1, 4))
         
         # if self.rewards_p1 < -0.1:
         #     self.done = True
@@ -320,6 +321,7 @@ class Controller():
 
         if self.step_count > 1000:
             self.done = True
+            self.rewards_p1 = 0
             print("Times up. Reward:", round(self.rewards_p1, 4), ", Hit:", self.hit_count)
         
         self.step_count += 1
